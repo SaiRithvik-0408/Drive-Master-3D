@@ -1,4 +1,4 @@
-name: Build Android APK and Play Store AAB
+name: Build Android APK
 
 on:
   push:
@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Code
@@ -19,7 +22,7 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Install npm dependencies
+      - name: Install Dependencies
         run: npm install
 
       - name: Build Web Production Assets
@@ -31,26 +34,41 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Sync Capacitor Android
         run: npx cap sync android
 
-      - name: Build APK and AAB with Gradle
+      - name: Build Debug APK with Gradle
         working-directory: ./android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug bundleRelease
+          ./gradlew assembleDebug --stacktrace
 
-      - name: Upload Debug APK (For Testing)
+      - name: Rename APK for Distribution
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk Drive-Master-3D.apk
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: drive-master-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: Drive-Master-3D-APK
+          path: Drive-Master-3D.apk
 
-      - name: Upload Play Store AAB (For Google Play Store Release)
-        uses: actions/upload-artifact@v4
+      - name: Create GitHub Release with APK
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/heads/main')
         with:
-          name: drive-master-playstore-aab
-          path: android/app/build/outputs/bundle/release/app-release.aab
+          tag_name: v1.0.0
+          name: "Drive Master 3D v1.0.0 (APK)"
+          body: |
+            ## Drive Master 3D - Android APK Download 🚗💨
+            
+            Download `Drive-Master-3D.apk` directly to your Android device to install and play!
+            
+            ### How to Install on Android:
+            1. Download `Drive-Master-3D.apk` below.
+            2. Tap the file in your notification or Downloads folder.
+            3. If prompted, allow "Install unknown apps" for your browser/file manager.
+            4. Open **Drive Master 3D** and start driving!
+          files: Drive-Master-3D.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
