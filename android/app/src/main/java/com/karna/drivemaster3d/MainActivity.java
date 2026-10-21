@@ -1,4 +1,4 @@
-package com.karna.drdriving3d;
+package com.karna.drivemaster3d;
 
 import com.getcapacitor.BridgeActivity;
 
