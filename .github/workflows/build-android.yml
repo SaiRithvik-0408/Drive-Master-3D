@@ -56,8 +56,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.0
-          name: "Drive Master 3D v1.0.0 (APK)"
+          tag_name: v1.0.1
+          name: "Drive Master 3D v1.0.1 (Mobile Aspect Ratio & UI Fix)"
           body: |
             ## Drive Master 3D - Android APK Download 🚗💨
             
