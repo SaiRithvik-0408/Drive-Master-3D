@@ -1,0 +1,9 @@
+{
+  "appId": "com.karna.drivemaster3d",
+  "appName": "Drive Master 3D",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": true
+  }
+}

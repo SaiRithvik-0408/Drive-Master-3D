@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Drive Master 3D - Ultimate City Driving & Parking Simulator</title>
+  <meta name="description" content="Experience realistic 3D city car driving simulation with authentic steering wheel controls, transmission gears, traffic navigation, and parking missions.">
+
+  <!-- Google Fonts: Orbitron for racing dashboard, Outfit for sleek modern UI -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./src/styles/main.css">
+</head>
+<body>
+  <!-- 3D Canvas Container -->
+  <div id="game-container">
+    <canvas id="canvas3d"></canvas>
+  </div>
+
+  <!-- Rearview Mirror (Cockpit Perspective) -->
+  <div id="rearview-mirror-container">
+    <canvas id="rearview-canvas"></canvas>
+  </div>
+
+  <!-- Reverse Parking Guidelines Overlay -->
+  <div id="reverse-camera-overlay">
+    <div class="reverse-warning">⚠️ REVERSE CAMERA ACTIVE</div>
+    <div class="reverse-guidelines">
+      <div class="guideline-marker green"></div>
+      <div class="guideline-marker yellow"></div>
+      <div class="guideline-marker red"></div>
+    </div>
+  </div>
+
+  <!-- Main Game HUD Overlay -->
+  <div id="ui-overlay">
+    <!-- Top HUD Bar -->
+    <div class="top-hud interactive">
+      <div class="hud-group">
+        <button id="btn-menu" class="hud-icon-btn" title="Mission Menu">☰</button>
+        <div class="hud-badge objective" id="objective-badge">
+          <span id="objective-title">⚡ SPEED RUN</span>
+        </div>
+      </div>
+
+      <!-- Center Live GPS Waypoint Tracker -->
+      <div id="gps-banner">
+        <span id="gps-arrow">⬆️</span>
+        <span id="gps-text">NAV: <span id="gps-dist">420m</span></span>
+      </div>
+
+      <div class="hud-group">
+        <div class="hud-badge timer">
+          ⏱️ <span id="timer-val">00:50.0</span>
+        </div>
+        <div class="hud-badge coins">
+          🪙 <span id="coins-val">1,250</span>
+        </div>
+        <button id="btn-camera" class="hud-badge interactive" style="cursor: pointer;">🎥 CHASE</button>
+        <button id="btn-mute" class="hud-icon-btn" title="Toggle Sound">🔊</button>
+      </div>
+    </div>
+
+    <!-- Keyboard Hints for Desktop Players -->
+    <div class="keyboard-hints">
+      <span>Steer: <kbd>A</kbd> / <kbd>D</kbd> or Drag Wheel</span>
+      <span>Throttle: <kbd>W</kbd> | Brake: <kbd>S</kbd> / <kbd>Space</kbd></span>
+      <span>Gears: <kbd>P</kbd> <kbd>R</kbd> <kbd>N</kbd> <kbd>D</kbd> | Horn: <kbd>H</kbd></span>
+    </div>
+
+    <!-- Bottom Controls Area -->
+    <div class="bottom-hud">
+      <!-- Left: Steering Wheel with Center Horn -->
+      <div class="steering-section interactive">
+        <div id="steering-wheel-wrapper">
+          <svg id="steering-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Outer Grip Ring -->
+            <circle cx="100" cy="100" r="90" stroke="#1e293b" stroke-width="18" fill="none" />
+            <circle cx="100" cy="100" r="90" stroke="#334155" stroke-width="14" stroke-dasharray="4 6" fill="none" opacity="0.6" />
+            <!-- Top Center Marker -->
+            <rect x="96" y="2" width="8" height="16" rx="3" fill="#f59e0b" />
+            <!-- 3 Metallic Spokes -->
+            <path d="M100 100 L30 145" stroke="#64748b" stroke-width="12" stroke-linecap="round" />
+            <path d="M100 100 L170 145" stroke="#64748b" stroke-width="12" stroke-linecap="round" />
+            <path d="M100 100 L100 30" stroke="#64748b" stroke-width="12" stroke-linecap="round" />
+            <!-- Spoke Chrome Inlays -->
+            <path d="M100 100 L30 145" stroke="#cbd5e1" stroke-width="4" stroke-linecap="round" />
+            <path d="M100 100 L170 145" stroke="#cbd5e1" stroke-width="4" stroke-linecap="round" />
+            <path d="M100 100 L100 30" stroke="#cbd5e1" stroke-width="4" stroke-linecap="round" />
+            <!-- Center Hub Ring -->
+            <circle cx="100" cy="100" r="38" fill="#0f172a" stroke="#475569" stroke-width="4" />
+          </svg>
+
+          <!-- Interactive Center Horn Button -->
+          <div id="horn-btn">
+            <span style="font-size: 16px;">📢</span>
+            <span style="font-size: 9px; font-weight: 800; font-family: var(--hud-font); letter-spacing: 1px;">HORN</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: Dr. Driving Dashboard Instrument Cluster -->
+      <div class="dashboard-cluster interactive">
+        <div class="indicators-row">
+          <div class="turn-indicator" id="turn-left" title="Left Indicator (Q)">◀</div>
+          <div style="font-family: var(--hud-font); font-size: 11px; color: var(--text-muted); font-weight: 700; letter-spacing: 1.5px;">DRIVE MASTER</div>
+          <div class="turn-indicator" id="turn-right" title="Right Indicator (E)">▶</div>
+        </div>
+
+        <div class="speedometer-main">
+          <div class="speed-digital" id="speed-val">0</div>
+          <div class="speed-unit">KM / H</div>
+        </div>
+
+        <div class="meters-container">
+          <!-- RPM Bar -->
+          <div class="meter-row">
+            <span>RPM</span>
+            <div class="meter-bar">
+              <div class="meter-fill rpm" id="rpm-fill"></div>
+            </div>
+          </div>
+          <!-- Fuel Bar -->
+          <div class="meter-row">
+            <span>FUEL</span>
+            <div class="meter-bar">
+              <div class="meter-fill fuel" id="fuel-fill" style="width: 100%;"></div>
+            </div>
+          </div>
+          <!-- Comfort / Score Bar -->
+          <div class="meter-row">
+            <span>VIP</span>
+            <div class="meter-bar">
+              <div class="meter-fill comfort" id="comfort-fill" style="width: 100%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Gear Shifter & Realistic Metal Pedals -->
+      <div class="pedals-gears-section interactive">
+        <!-- Mechanical Transmission Shifter -->
+        <div class="gear-shifter">
+          <button class="gear-btn" data-gear="P" id="gear-p" title="Park (P)">P</button>
+          <button class="gear-btn" data-gear="R" id="gear-r" title="Reverse (R)">R</button>
+          <button class="gear-btn" data-gear="N" id="gear-n" title="Neutral (N)">N</button>
+          <button class="gear-btn active" data-gear="D" id="gear-d" title="Drive (D)">D</button>
+        </div>
+
+        <!-- Foot Pedals -->
+        <div class="pedals-group">
+          <!-- Brake Pedal -->
+          <div class="pedal pedal-brake" id="pedal-brake" title="Brake (S / Space)">
+            <span class="pedal-key">BRAKE</span>
+            <span class="pedal-label">STOP</span>
+            <span class="pedal-key">[ S ]</span>
+          </div>
+
+          <!-- Gas Pedal -->
+          <div class="pedal pedal-gas" id="pedal-gas" title="Gas (W / ArrowUp)">
+            <span class="pedal-key">GAS</span>
+            <span class="pedal-label">DRIVE</span>
+            <span class="pedal-key">[ W ]</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Start Menu & Garage Modal -->
+  <div class="modal-overlay" id="modal-start">
+    <div class="modal-card">
+      <h1 class="modal-title">DRIVE MASTER 3D</h1>
+      <p class="modal-subtitle">Select your driving mission and tune your sports sedan</p>
+
+      <!-- Missions Grid -->
+      <div class="missions-grid">
+        <div class="mission-card selected" data-mission="speed_run">
+          <div class="mission-card-icon">⚡</div>
+          <div class="mission-card-title">SPEED RUN</div>
+          <div class="mission-card-desc">Reach hospital checkpoint in 50s. Weave through traffic.</div>
+        </div>
+
+        <div class="mission-card" data-mission="highway_cruise">
+          <div class="mission-card-icon">🛣️</div>
+          <div class="mission-card-title">HIGHWAY WEAVE</div>
+          <div class="mission-card-desc">Overtake 8 cars at speed without scratching paint.</div>
+        </div>
+
+        <div class="mission-card" data-mission="precision_parking">
+          <div class="mission-card-icon">🅿️</div>
+          <div class="mission-card-title">PARKING MASTER</div>
+          <div class="mission-card-desc">Navigate tight turns into bay #2 and shift to P.</div>
+        </div>
+
+        <div class="mission-card" data-mission="vip_chauffeur">
+          <div class="mission-card-icon">🎩</div>
+          <div class="mission-card-title">VIP ESCORT</div>
+          <div class="mission-card-desc">Smooth chauffeur drive. Keep comfort above 75%.</div>
+        </div>
+      </div>
+
+      <!-- Garage Car Color Picker -->
+      <div class="garage-row">
+        <span style="font-family: var(--hud-font); font-size: 13px; font-weight: 700; color: var(--text-muted); margin-right: 8px;">CAR COLOR:</span>
+        <div class="color-dot active" data-color="0xf59e0b" style="background: #f59e0b;" title="Amber Gold"></div>
+        <div class="color-dot" data-color="0xef4444" style="background: #ef4444;" title="Racing Red"></div>
+        <div class="color-dot" data-color="0x3b82f6" style="background: #3b82f6;" title="Electric Blue"></div>
+        <div class="color-dot" data-color="0x10b981" style="background: #10b981;" title="Emerald Green"></div>
+        <div class="color-dot" data-color="0xffffff" style="background: #ffffff;" title="Pearl White"></div>
+        <div class="color-dot" data-color="0x1e293b" style="background: #1e293b;" title="Midnight Dark"></div>
+      </div>
+
+      <button class="btn-primary" id="btn-start-game">START ENGINE & DRIVE</button>
+    </div>
+  </div>
+
+  <!-- Victory / Mission Complete Modal -->
+  <div class="modal-overlay hidden" id="modal-victory">
+    <div class="modal-card">
+      <div style="font-size: 48px; margin-bottom: 8px;">🏆</div>
+      <h2 class="modal-title" style="color: #fbbf24;">MISSION COMPLETE!</h2>
+      <p class="modal-subtitle" id="victory-mission-name">Speed Run Mastered</p>
+
+      <div class="results-summary">
+        <div class="result-row">
+          <span class="result-row-label">Time Remaining:</span>
+          <span class="result-row-val" id="victory-time">14.2s</span>
+        </div>
+        <div class="result-row">
+          <span class="result-row-label">Driving Comfort:</span>
+          <span class="result-row-val" id="victory-comfort">96%</span>
+        </div>
+        <div class="result-row">
+          <span class="result-row-label">Skill Bonus:</span>
+          <span class="result-row-val gold" id="victory-bonus">+320</span>
+        </div>
+        <div class="result-row" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; margin-top: 4px;">
+          <span class="result-row-label" style="font-weight: 700; color: #fff;">Total Reward:</span>
+          <span class="result-row-val gold" id="victory-reward">+🪙 670</span>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btn-next-mission">NEXT MISSION</button>
+      <button class="btn-secondary" onclick="location.reload()">GARAGE MENU</button>
+    </div>
+  </div>
+
+  <!-- Mission Failed Modal -->
+  <div class="modal-overlay hidden" id="modal-fail">
+    <div class="modal-card">
+      <div style="font-size: 48px; margin-bottom: 8px;">💥</div>
+      <h2 class="modal-title" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">MISSION FAILED</h2>
+      <p class="modal-subtitle" id="fail-reason" style="color: #fca5a5;">Vehicle crashed into traffic barrier!</p>
+
+      <div class="results-summary">
+        <div class="result-row">
+          <span class="result-row-label">Damage Assessment:</span>
+          <span class="result-row-val" style="color: #ef4444;">Severe Body Impact</span>
+        </div>
+        <div class="result-row">
+          <span class="result-row-label">Coins Penalty:</span>
+          <span class="result-row-val" style="color: #94a3b8;">🪙 0</span>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btn-retry" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);">RETRY MISSION</button>
+      <button class="btn-secondary" onclick="location.reload()">RETURN TO GARAGE</button>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

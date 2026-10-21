@@ -1,0 +1,21 @@
+{
+  "name": "drive-master-3d",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host --port 5173",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "canvas-confetti": "^1.9.2",
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.12"
+  }
+}
