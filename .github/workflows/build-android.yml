@@ -29,21 +29,6 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Set up Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Build Web Production Assets
-        run: npm run build
-
-      - name: Copy Assets into Android Platform
-        run: npx cap copy android
-
       - name: Build Debug APK with Gradle
         working-directory: ./android
         run: ./gradlew assembleDebug --no-daemon --stacktrace
